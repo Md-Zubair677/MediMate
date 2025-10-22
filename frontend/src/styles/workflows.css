@@ -1,0 +1,283 @@
+/* AI Workflows and Agent Styling */
+
+.workflows-page, .agent-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.workflow-container, .agent-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.workflow-input, .agent-input {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.workflow-results, .agent-results {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.symptom-input {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.symptom-input input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.875rem;
+}
+
+.symptoms-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.symptom-tag {
+  background: #dbeafe;
+  color: #1e40af;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.symptom-tag button {
+  background: none;
+  border: none;
+  color: #1e40af;
+  cursor: pointer;
+  font-weight: bold;
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.vitals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.5rem;
+}
+
+.vitals-grid input {
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.875rem;
+}
+
+.workflow-btn, .agent-btn {
+  width: 100%;
+  margin-top: 1.5rem;
+  padding: 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.workflow-header, .agent-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.workflow-id, .agent-id {
+  font-family: 'Courier New', monospace;
+  background: #f3f4f6;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+}
+
+.urgency-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.confidence-score {
+  font-weight: 600;
+  font-size: 1.125rem;
+}
+
+.workflow-steps, .agent-actions {
+  margin-bottom: 2rem;
+}
+
+.workflow-step, .agent-action {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.step-header, .action-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.step-number {
+  background: #3b82f6;
+  color: white;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.875rem;
+}
+
+.step-action {
+  font-weight: 600;
+  font-size: 1.125rem;
+  color: #1f2937;
+}
+
+.action-type {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.step-reasoning, .action-reasoning {
+  color: #4b5563;
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.next-actions {
+  margin-top: 1rem;
+}
+
+.next-actions ul, .action-parameters ul {
+  margin: 0.5rem 0 0 1rem;
+  padding: 0;
+}
+
+.next-actions li, .action-parameters li {
+  margin-bottom: 0.25rem;
+  color: #6b7280;
+}
+
+.action-parameters {
+  background: #f3f4f6;
+  padding: 1rem;
+  border-radius: 6px;
+  margin-top: 1rem;
+}
+
+.param-key {
+  font-weight: 600;
+  color: #374151;
+}
+
+.param-value {
+  color: #6b7280;
+  margin-left: 0.5rem;
+}
+
+.recommendations, .final-recommendation {
+  background: #ecfdf5;
+  border: 1px solid #d1fae5;
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.recommendations h3, .final-recommendation h3 {
+  color: #065f46;
+  margin-bottom: 1rem;
+}
+
+.recommendations ul {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.recommendations li {
+  margin-bottom: 0.5rem;
+  color: #047857;
+}
+
+.recommendation-text {
+  color: #047857;
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+.agent-capabilities {
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.agent-capabilities h4 {
+  color: #1e40af;
+  margin-bottom: 1rem;
+}
+
+.agent-capabilities ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.agent-capabilities li {
+  margin-bottom: 0.5rem;
+  color: #1e40af;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .workflow-container, .agent-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .vitals-grid {
+    grid-template-columns: 1fr;
+  }
+}

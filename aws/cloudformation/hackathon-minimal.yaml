@@ -1,0 +1,147 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'MediMate Hackathon - Minimal Cost AWS Infrastructure'
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: 'medimate-hackathon'
+    Description: 'Project name for resource naming'
+
+Resources:
+  # S3 Bucket for document storage (Free Tier: 5GB)
+  DocumentBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${ProjectName}-documents-${AWS::AccountId}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteAfter7Days
+            Status: Enabled
+            ExpirationInDays: 7  # Auto-cleanup to save costs
+
+  # DynamoDB Table for appointments (Free Tier: 25GB)
+  AppointmentsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${ProjectName}-appointments'
+      BillingMode: ON_DEMAND  # Pay per request - cost efficient for demos
+      AttributeDefinitions:
+        - AttributeName: patient_id
+          AttributeType: S
+        - AttributeName: appointment_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: patient_id
+          KeyType: HASH
+        - AttributeName: appointment_id
+          KeyType: RANGE
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true  # Auto-cleanup old records
+
+  # Cognito User Pool (Free Tier: 50K MAUs)
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub '${ProjectName}-users'
+      AutoVerifiedAttributes:
+        - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: false
+          RequireLowercase: false
+          RequireNumbers: false
+          RequireSymbols: false
+      Schema:
+        - Name: email
+          AttributeDataType: String
+          Required: true
+        - Name: given_name
+          AttributeDataType: String
+          Required: true
+        - Name: family_name
+          AttributeDataType: String
+          Required: true
+
+  # Cognito User Pool Client
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref UserPool
+      ClientName: !Sub '${ProjectName}-client'
+      GenerateSecret: false
+      ExplicitAuthFlows:
+        - ADMIN_NO_SRP_AUTH
+        - USER_PASSWORD_AUTH
+
+  # Lambda Function for API (Free Tier: 1M requests)
+  ApiFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${ProjectName}-api'
+      Runtime: python3.9
+      Handler: lambda_function.lambda_handler
+      Code:
+        ZipFile: |
+          import json
+          def lambda_handler(event, context):
+              return {
+                  'statusCode': 200,
+                  'body': json.dumps({'message': 'MediMate API Ready'})
+              }
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref DocumentBucket
+          TABLE_NAME: !Ref AppointmentsTable
+          USER_POOL_ID: !Ref UserPool
+      Timeout: 30
+      MemorySize: 512  # Minimal memory for cost efficiency
+
+  # API Gateway (Free Tier: 1M API calls)
+  ApiGateway:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub '${ProjectName}-api'
+      Description: 'MediMate Hackathon API'
+
+  # CloudWatch Log Group with retention
+  ApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${ProjectName}-api'
+      RetentionInDays: 3  # Short retention to save costs
+
+Outputs:
+  BucketName:
+    Description: 'S3 Bucket for documents'
+    Value: !Ref DocumentBucket
+    Export:
+      Name: !Sub '${ProjectName}-bucket'
+
+  TableName:
+    Description: 'DynamoDB table name'
+    Value: !Ref AppointmentsTable
+    Export:
+      Name: !Sub '${ProjectName}-table'
+
+  UserPoolId:
+    Description: 'Cognito User Pool ID'
+    Value: !Ref UserPool
+    Export:
+      Name: !Sub '${ProjectName}-user-pool'
+
+  UserPoolClientId:
+    Description: 'Cognito User Pool Client ID'
+    Value: !Ref UserPoolClient
+    Export:
+      Name: !Sub '${ProjectName}-user-pool-client'
+
+  EstimatedMonthlyCost:
+    Description: 'Estimated monthly cost (USD)'
+    Value: '$5-15 (mostly within free tier)'

@@ -1,0 +1,114 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global Styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background-color: #f8fafc;
+  color: #1e293b;
+  line-height: 1.6;
+}
+
+/* Typography Classes */
+.font-logo {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+}
+
+.font-heading {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 500;
+}
+
+.font-body {
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+}
+
+/* Healthcare UI Components */
+.btn-primary {
+  @apply bg-medimate-primary hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-xl transition-all duration-200 shadow-soft hover:shadow-medium;
+}
+
+.btn-secondary {
+  @apply bg-white hover:bg-gray-50 text-medimate-primary border-2 border-medimate-primary font-medium py-3 px-6 rounded-xl transition-all duration-200 shadow-soft hover:shadow-medium;
+}
+
+.card {
+  @apply bg-white rounded-2xl shadow-soft hover:shadow-medium transition-all duration-200 p-6;
+}
+
+.input-field {
+  @apply w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-medimate-primary focus:border-transparent transition-all duration-200 font-body;
+}
+
+.health-badge {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-healthcare-green/10 text-healthcare-green;
+}
+
+.warning-badge {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800;
+}
+
+/* Layout Components */
+.container-main {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+.section-padding {
+  @apply py-12 lg:py-16;
+}
+
+/* Animation Classes */
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Healthcare-specific styles */
+.chat-message {
+  @apply p-4 rounded-2xl mb-4 font-body;
+}
+
+.chat-user {
+  @apply bg-medimate-primary text-white ml-8;
+}
+
+.chat-ai {
+  @apply bg-white border border-gray-200 mr-8;
+}
+
+.health-icon {
+  @apply w-6 h-6 text-healthcare-blue;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .btn-primary, .btn-secondary {
+    @apply py-2 px-4 text-sm;
+  }
+  
+  .card {
+    @apply p-4;
+  }
+}

@@ -1,0 +1,607 @@
+import React, { useState } from 'react';
+import { register, confirmRegistration } from '../utils/auth';
+
+const SignupPage = ({ onNext, onBack }) => {
+  const [currentStep, setCurrentStep] = useState(1);
+  const [selectedRole, setSelectedRole] = useState('');
+  const [formData, setFormData] = useState({
+    // Common fields
+    name: '',
+    email: '',
+    mobile: '',
+    password: '',
+    confirmPassword: '',
+    
+    // Patient specific
+    age: '',
+    gender: '',
+    healthId: '',
+    
+    // Doctor specific
+    specialization: '',
+    experience: '',
+    licenseNumber: '',
+    hospitalAffiliation: '',
+    
+    // Admin specific
+    adminKey: ''
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showVerification, setShowVerification] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [registeredEmail, setRegisteredEmail] = useState('');
+
+  const handleRoleSelect = (role) => {
+    setSelectedRole(role);
+    setCurrentStep(2);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (formData.password !== formData.confirmPassword) {
+      alert('Passwords do not match!');
+      return;
+    }
+
+    // Patient signup - no verification required
+    if (selectedRole === 'patient') {
+      alert('Patient account created! You can now login.');
+      onNext({
+        id: 'patient_' + Date.now(),
+        name: formData.name,
+        email: formData.email,
+        role: 'patient'
+      });
+      return;
+    }
+
+    // Doctor/Admin signup - requires verification
+    setIsLoading(true);
+    
+    try {
+      const result = await register({
+        email: formData.email,
+        password: formData.password,
+        firstName: formData.name.split(' ')[0] || formData.name,
+        lastName: formData.name.split(' ').slice(1).join(' ') || 'User',
+        role: selectedRole
+      });
+
+      if (result.success) {
+        if (result.confirmationRequired) {
+          setRegisteredEmail(formData.email);
+          setShowVerification(true);
+          alert('Registration successful! Please check your email for verification code.');
+        } else {
+          alert('Registration complete! You can now login.');
+          onBack();
+        }
+      } else {
+        alert(result.error || 'Registration failed');
+      }
+    } catch (error) {
+      alert('Registration failed: ' + error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerification = async (e) => {
+    e.preventDefault();
+    
+    if (!verificationCode) {
+      alert('Please enter verification code');
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      const result = await confirmRegistration(registeredEmail, verificationCode);
+      
+      if (result.success) {
+        alert('Email verified successfully! You can now login.');
+        onBack();
+      } else {
+        alert(result.error || 'Verification failed');
+      }
+    } catch (error) {
+      alert('Verification failed: ' + error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEmergency = () => {
+    window.open('tel:911', '_self');
+  };
+
+  const renderRoleSelection = () => (
+    <div className="auth-content">
+      <h2 style={{ textAlign: 'center', marginBottom: 'var(--spacing-xl)', color: '#007BFF' }}>
+        Choose Your Role
+      </h2>
+      
+      <div className="role-cards">
+        <div className="role-card" onClick={() => handleRoleSelect('patient')}>
+          <div className="role-card-icon">👤</div>
+          <div className="role-card-title">Patient</div>
+          <p style={{ fontSize: '0.875rem', color: '#6c757d', marginTop: 'var(--spacing-sm)' }}>
+            Book appointments, consult AI, manage health records
+          </p>
+        </div>
+        
+        <div className="role-card" onClick={() => handleRoleSelect('doctor')}>
+          <div className="role-card-icon">👨⚕️</div>
+          <div className="role-card-title">Doctor</div>
+          <p style={{ fontSize: '0.875rem', color: '#6c757d', marginTop: 'var(--spacing-sm)' }}>
+            Manage patients, AI-assisted diagnosis, appointments
+          </p>
+        </div>
+        
+        <div className="role-card" onClick={() => handleRoleSelect('admin')}>
+          <div className="role-card-icon">🤖</div>
+          <div className="role-card-title">AI Admin</div>
+          <p style={{ fontSize: '0.875rem', color: '#6c757d', marginTop: 'var(--spacing-sm)' }}>
+            System administration, AI model management
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderPatientForm = () => (
+    <form onSubmit={handleSubmit} className="auth-form">
+      <div className="form-group">
+        <span className="input-icon">👤</span>
+        <input
+          type="text"
+          className="form-input"
+          placeholder="Full Name"
+          value={formData.name}
+          onChange={(e) => setFormData(prev => ({...prev, name: e.target.value}))}
+          required
+        />
+      </div>
+
+      <div className="form-row">
+        <div className="form-group">
+          <input
+            type="number"
+            className="form-input"
+            placeholder="Age"
+            value={formData.age}
+            onChange={(e) => setFormData(prev => ({...prev, age: e.target.value}))}
+            required
+          />
+        </div>
+        <div className="form-group">
+          <select
+            className="form-select"
+            value={formData.gender}
+            onChange={(e) => setFormData(prev => ({...prev, gender: e.target.value}))}
+            required
+          >
+            <option value="">Select Gender</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="form-group">
+        <span className="input-icon">📧</span>
+        <input
+          type="email"
+          className="form-input"
+          placeholder="Email Address"
+          value={formData.email}
+          onChange={(e) => setFormData(prev => ({...prev, email: e.target.value}))}
+          required
+        />
+      </div>
+
+      <div className="form-group">
+        <span className="input-icon">📱</span>
+        <input
+          type="tel"
+          className="form-input"
+          placeholder="Mobile Number"
+          value={formData.mobile}
+          onChange={(e) => setFormData(prev => ({...prev, mobile: e.target.value}))}
+          required
+        />
+      </div>
+
+      <div className="form-group">
+        <span className="input-icon">🆔</span>
+        <input
+          type="text"
+          className="form-input"
+          placeholder="Health ID (Optional)"
+          value={formData.healthId}
+          onChange={(e) => setFormData(prev => ({...prev, healthId: e.target.value}))}
+        />
+      </div>
+
+      <div className="form-group">
+        <span className="input-icon">🔒</span>
+        <input
+          type={showPassword ? 'text' : 'password'}
+          className="form-input"
+          placeholder="Password"
+          value={formData.password}
+          onChange={(e) => setFormData(prev => ({...prev, password: e.target.value}))}
+          required
+        />
+        <button
+          type="button"
+          className="password-toggle"
+          onClick={() => setShowPassword(!showPassword)}
+        >
+          {showPassword ? '🙈' : '👁️'}
+        </button>
+      </div>
+
+      <div className="form-group">
+        <span className="input-icon">🔒</span>
+        <input
+          type={showConfirmPassword ? 'text' : 'password'}
+          className="form-input"
+          placeholder="Confirm Password"
+          value={formData.confirmPassword}
+          onChange={(e) => setFormData(prev => ({...prev, confirmPassword: e.target.value}))}
+          required
+        />
+        <button
+          type="button"
+          className="password-toggle"
+          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+        >
+          {showConfirmPassword ? '🙈' : '👁️'}
+        </button>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-lg)' }}>
+        <input
+          type="checkbox"
+          id="twoFactor"
+          checked={twoFactorEnabled}
+          onChange={(e) => setTwoFactorEnabled(e.target.checked)}
+        />
+        <label htmlFor="twoFactor" style={{ fontSize: '0.875rem' }}>
+          Enable Two-Factor Authentication (SMS/Email OTP)
+        </label>
+      </div>
+
+      <button type="submit" className="auth-button success" disabled={isLoading}>
+        {isLoading ? 'Creating Account...' : 'Create Patient Account'}
+      </button>
+    </form>
+  );
+
+  const renderDoctorForm = () => (
+    <form onSubmit={handleSubmit} className="auth-form">
+      <div className="form-group">
+        <span className="input-icon">👨⚕️</span>
+        <input
+          type="text"
+          className="form-input"
+          placeholder="Full Name"
+          value={formData.name}
+          onChange={(e) => setFormData(prev => ({...prev, name: e.target.value}))}
+          required
+        />
+      </div>
+
+      <div className="form-row">
+        <div className="form-group">
+          <select
+            className="form-select"
+            value={formData.specialization}
+            onChange={(e) => setFormData(prev => ({...prev, specialization: e.target.value}))}
+            required
+          >
+            <option value="">Select Specialization</option>
+            <option value="cardiology">Cardiology</option>
+            <option value="neurology">Neurology</option>
+            <option value="pediatrics">Pediatrics</option>
+            <option value="surgery">Surgery</option>
+            <option value="dermatology">Dermatology</option>
+            <option value="psychiatry">Psychiatry</option>
+          </select>
+        </div>
+        <div className="form-group">
+          <input
+            type="number"
+            className="form-input"
+            placeholder="Experience (Years)"
+            value={formData.experience}
+            onChange={(e) => setFormData(prev => ({...prev, experience: e.target.value}))}
+            required
+          />
+        </div>
+      </div>
+
+      <div className="form-group">
+        <span className="input-icon">📋</span>
+        <input
+          type="text"
+          className="form-input"
+          placeholder="License/Registration Number *"
+          value={formData.licenseNumber}
+          onChange={(e) => setFormData(prev => ({...prev, licenseNumber: e.target.value}))}
+          required
+        />
+      </div>
+
+      <div className="form-group">
+        <span className="input-icon">🏥</span>
+        <input
+          type="text"
+          className="form-input"
+          placeholder="Hospital/Clinic Affiliation"
+          value={formData.hospitalAffiliation}
+          onChange={(e) => setFormData(prev => ({...prev, hospitalAffiliation: e.target.value}))}
+          required
+        />
+      </div>
+
+      <div className="form-group">
+        <span className="input-icon">📧</span>
+        <input
+          type="email"
+          className="form-input"
+          placeholder="Professional Email"
+          value={formData.email}
+          onChange={(e) => setFormData(prev => ({...prev, email: e.target.value}))}
+          required
+        />
+      </div>
+
+      <div className="form-group">
+        <span className="input-icon">📱</span>
+        <input
+          type="tel"
+          className="form-input"
+          placeholder="Mobile Number"
+          value={formData.mobile}
+          onChange={(e) => setFormData(prev => ({...prev, mobile: e.target.value}))}
+          required
+        />
+      </div>
+
+      <div className="form-group">
+        <span className="input-icon">🔒</span>
+        <input
+          type={showPassword ? 'text' : 'password'}
+          className="form-input"
+          placeholder="Password"
+          value={formData.password}
+          onChange={(e) => setFormData(prev => ({...prev, password: e.target.value}))}
+          required
+        />
+        <button
+          type="button"
+          className="password-toggle"
+          onClick={() => setShowPassword(!showPassword)}
+        >
+          {showPassword ? '🙈' : '👁️'}
+        </button>
+      </div>
+
+      <div className="form-group">
+        <span className="input-icon">🔒</span>
+        <input
+          type={showConfirmPassword ? 'text' : 'password'}
+          className="form-input"
+          placeholder="Confirm Password"
+          value={formData.confirmPassword}
+          onChange={(e) => setFormData(prev => ({...prev, confirmPassword: e.target.value}))}
+          required
+        />
+        <button
+          type="button"
+          className="password-toggle"
+          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+        >
+          {showConfirmPassword ? '🙈' : '👁️'}
+        </button>
+      </div>
+
+      <button type="submit" className="auth-button success" disabled={isLoading}>
+        {isLoading ? 'Creating Account...' : 'Create Doctor Account'}
+      </button>
+    </form>
+  );
+
+  const renderAdminForm = () => (
+    <form onSubmit={handleSubmit} className="auth-form">
+      <div className="form-group">
+        <span className="input-icon">🔑</span>
+        <input
+          type="text"
+          className="form-input"
+          placeholder="Admin Access Key *"
+          value={formData.adminKey}
+          onChange={(e) => setFormData(prev => ({...prev, adminKey: e.target.value}))}
+          required
+        />
+      </div>
+
+      <div className="form-group">
+        <span className="input-icon">📧</span>
+        <input
+          type="email"
+          className="form-input"
+          placeholder="Admin Email"
+          value={formData.email}
+          onChange={(e) => setFormData(prev => ({...prev, email: e.target.value}))}
+          required
+        />
+      </div>
+
+      <div className="form-group">
+        <span className="input-icon">🔒</span>
+        <input
+          type={showPassword ? 'text' : 'password'}
+          className="form-input"
+          placeholder="Password"
+          value={formData.password}
+          onChange={(e) => setFormData(prev => ({...prev, password: e.target.value}))}
+          required
+        />
+        <button
+          type="button"
+          className="password-toggle"
+          onClick={() => setShowPassword(!showPassword)}
+        >
+          {showPassword ? '🙈' : '👁️'}
+        </button>
+      </div>
+
+      <button type="submit" className="auth-button success" disabled={isLoading}>
+        {isLoading ? 'Creating Account...' : 'Create Admin Account'}
+      </button>
+    </form>
+  );
+
+  return (
+    <div className="auth-page">
+      <div className="auth-container">
+        <div className="auth-header">
+          <div className="medimate-logo">🏥</div>
+          <h1 className="auth-title">Join MediMate</h1>
+          <p className="auth-subtitle">Create your healthcare account</p>
+        </div>
+
+        {/* Step Indicator */}
+        <div style={{ padding: 'var(--spacing-lg)' }}>
+          <div className="step-indicator">
+            <div className={`step ${currentStep >= 1 ? 'active' : ''}`}>1</div>
+            <div className={`step ${currentStep >= 2 ? 'active' : ''}`}>2</div>
+          </div>
+        </div>
+
+        {showVerification ? (
+          <div className="auth-content">
+            <h2 style={{ textAlign: 'center', marginBottom: 'var(--spacing-xl)', color: '#007BFF' }}>
+              📧 Verify Your Email
+            </h2>
+            <p style={{ textAlign: 'center', marginBottom: 'var(--spacing-lg)', color: '#6c757d' }}>
+              We sent a verification code to {registeredEmail}
+            </p>
+            
+            <form onSubmit={handleVerification} className="auth-form">
+              <div className="form-group">
+                <span className="input-icon">🔢</span>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Enter verification code"
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value)}
+                  required
+                />
+              </div>
+              
+              <button type="submit" className="auth-button" disabled={isLoading}>
+                {isLoading ? 'Verifying...' : 'Verify Email'}
+              </button>
+            </form>
+            
+            <div style={{ textAlign: 'center', marginTop: 'var(--spacing-lg)' }}>
+              <button 
+                onClick={() => setShowVerification(false)}
+                style={{ 
+                  background: 'none', 
+                  border: 'none', 
+                  color: '#007BFF', 
+                  cursor: 'pointer',
+                  textDecoration: 'underline'
+                }}
+              >
+                ← Back to Registration
+              </button>
+            </div>
+          </div>
+        ) : currentStep === 1 ? renderRoleSelection() : (
+          <div className="auth-content">
+            <button 
+              onClick={() => setCurrentStep(1)}
+              style={{ 
+                background: 'none', 
+                border: 'none', 
+                color: '#007BFF', 
+                cursor: 'pointer',
+                marginBottom: 'var(--spacing-lg)'
+              }}
+            >
+              ← Back to Role Selection
+            </button>
+            
+            <h2 style={{ textAlign: 'center', marginBottom: 'var(--spacing-xl)', color: '#007BFF' }}>
+              {selectedRole === 'patient' && '👤 Patient Registration'}
+              {selectedRole === 'doctor' && '👨⚕️ Doctor Registration'}
+              {selectedRole === 'admin' && '🤖 Admin Registration'}
+            </h2>
+
+            {selectedRole === 'patient' && renderPatientForm()}
+            {selectedRole === 'doctor' && renderDoctorForm()}
+            {selectedRole === 'admin' && renderAdminForm()}
+          </div>
+        )}
+
+        {/* Security Footer */}
+        <div className="auth-footer">
+          <div>HIPAA Compliant | AWS Secured | 256-bit Encryption</div>
+          <div className="security-features">
+            <div className="security-feature">
+              <span>🔒</span>
+              <span>SSL Secured</span>
+            </div>
+            <div className="security-feature">
+              <span>🛡️</span>
+              <span>HIPAA Compliant</span>
+            </div>
+            <div className="security-feature">
+              <span>☁️</span>
+              <span>AWS Protected</span>
+            </div>
+          </div>
+          
+          {/* Back to Login Link */}
+          {onBack && (
+            <div style={{ textAlign: 'center', marginTop: 'var(--spacing-md)' }}>
+              <button 
+                onClick={onBack}
+                style={{ 
+                  background: 'none', 
+                  border: 'none', 
+                  color: '#007BFF', 
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  fontSize: '0.875rem'
+                }}
+              >
+                ← Back to Login
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Emergency Button */}
+      <button className="emergency-button" onClick={handleEmergency}>
+        🚨 Medical Emergency? Call 911
+      </button>
+    </div>
+  );
+};
+
+export default SignupPage;

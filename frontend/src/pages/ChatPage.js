@@ -1,0 +1,800 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { createRetryAxios, useErrorHandler } from '../utils/error_handler';
+import { InlineErrorMessage } from '../components/ErrorNotification';
+import { PageErrorBoundary } from '../components/ErrorBoundary';
+import '../styles/chat.css';
+const ChatPage = () => {
+  // State management
+  const [messages, setMessages] = useState([
+    {
+      type: 'ai',
+      content: `Hi there! 👋 I'm MediMate, your friendly health assistant.
+
+How can I help you today? 🤔
+
+Got questions about:
+• Symptoms
+• Nutrition  
+• Fitness
+• Or anything health-related!
+
+I'm here to chat. What's on your mind?`
+    }
+  ]);
+  const [currentMessage, setCurrentMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(false);
+  const [voiceMode, setVoiceMode] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [ambientAudio, setAmbientAudio] = useState(null);
+
+  // Voice Enhancement States
+  const [selectedLanguage, setSelectedLanguage] = useState('en-US');
+  const [voiceSettings, setVoiceSettings] = useState({
+    rate: 0.85,
+    pitch: 1.1,
+    volume: 0.9
+  });
+  const [showVoiceSettings, setShowVoiceSettings] = useState(false);
+  const [canInterrupt] = useState(true);
+
+  // Use ref to maintain voice mode state across re-renders
+  const voiceModeRef = useRef(false);
+  const currentUtteranceRef = useRef(null);
+
+  // Language Configuration with Telugu Support
+  const supportedLanguages = [
+    { code: 'en-US', name: 'English (US)', flag: '🇺🇸' },
+    { code: 'en-GB', name: 'English (UK)', flag: '🇬🇧' },
+    { code: 'te-IN', name: 'Telugu (తెలుగు)', flag: '🇮🇳' },
+    { code: 'hi-IN', name: 'Hindi (हिंदी)', flag: '🇮🇳' },
+    { code: 'ta-IN', name: 'Tamil (தமிழ்)', flag: '🇮🇳' },
+    { code: 'kn-IN', name: 'Kannada (ಕನ್ನಡ)', flag: '🇮🇳' },
+    { code: 'es-ES', name: 'Spanish (Español)', flag: '🇪🇸' },
+    { code: 'fr-FR', name: 'French (Français)', flag: '🇫🇷' },
+    { code: 'de-DE', name: 'German (Deutsch)', flag: '🇩🇪' }
+  ];
+
+  // Hindi Medical Translations
+  const hindiTranslations = {
+    greeting: "नमस्ते! मैं मेडिमेट हूं, आपका स्वास्थ्य सहायक। आपको कैसी स्वास्थ्य समस्याएं हैं?",
+    listening: "आपकी बात सुन रहा हूं...",
+    processing: "आपके सवाल को समझ रहा हूं...",
+    error: "माफ करें, कुछ समस्या हुई है। कृपया फिर से कोशिश करें।",
+    yourTurn: "अब आप बोलें",
+    fever: "बुखार के लिए ये उपयोगी सुझाव हैं: 1. आराम करें और पानी पिएं 2. पैरासिटामोल जैसी दवा लें 3. माथे पर ठंडी पट्टी रखें 4. हल्के कपड़े पहनें 5. गुनगुने पानी से नहाएं 6. हल्का खाना खाएं 7. भरपूर नींद लें 8. भारी काम न करें 9. तापमान की जांच करते रहें 10. अगर बुखार 3 दिन से ज्यादा रहे तो डॉक्टर से मिलें। जल्दी ठीक हो जाइए!",
+    headache: "सिरदर्द के लिए: 1. आराम करें और आंखें बंद करके लेटें 2. माथे पर ठंडी पट्टी रखें 3. पानी पिएं 4. हल्की मालिश करें 5. अंधेरे कमरे में आराम करें",
+    cough: "खांसी के लिए: 1. गर्म पानी पिएं 2. शहद और अदरक लें 3. भाप लें 4. गर्म नमक के पानी से गरारे करें 5. धूम्रपान से बचें",
+    cold: "सर्दी-जुकाम के लिए: 1. आराम करें 2. गर्म तरल पदार्थ पिएं 3. भाप लें 4. विटामिन सी लें 5. हाथ धोते रहें"
+  };
+
+  // Translation function for medical responses
+  const translateResponse = (englishText, targetLanguage) => {
+    // Simple keyword-based translation for common medical responses
+    if (targetLanguage === 'hi-IN') {
+      const lowerText = englishText.toLowerCase();
+
+      // Check for fever-related response
+      if (lowerText.includes('fever') && (lowerText.includes('tips') || lowerText.includes('manage'))) {
+        return hindiTranslations.fever;
+      }
+
+      // Check for headache-related response
+      if (lowerText.includes('headache') || lowerText.includes('head pain')) {
+        return hindiTranslations.headache;
+      }
+
+      // Check for cough-related response
+      if (lowerText.includes('cough') && lowerText.includes('tips')) {
+        return hindiTranslations.cough;
+      }
+
+      // Check for cold-related response
+      if (lowerText.includes('cold') || lowerText.includes('flu')) {
+        return hindiTranslations.cold;
+      }
+
+      // Basic word replacements for common medical terms
+      let translatedText = englishText
+        .replace(/fever/gi, 'बुखार')
+        .replace(/headache/gi, 'सिरदर्द')
+        .replace(/cough/gi, 'खांसी')
+        .replace(/cold/gi, 'सर्दी')
+        .replace(/pain/gi, 'दर्द')
+        .replace(/medicine/gi, 'दवा')
+        .replace(/doctor/gi, 'डॉक्टर')
+        .replace(/hospital/gi, 'अस्पताल')
+        .replace(/rest/gi, 'आराम')
+        .replace(/water/gi, 'पानी');
+
+      return translatedText;
+    }
+
+    // If no translation found, return original text
+    return englishText;
+  };
+
+  // Error handling
+  const { error, handleError, clearError, errorMessage, recoverySuggestions } = useErrorHandler();
+
+  // API configuration
+  const api = createRetryAxios({
+    baseURL: 'http://localhost:8000',
+    timeout: 15000
+  });
+
+  // Voice recognition setup
+  useEffect(() => {
+    const hasWebkitSpeech = "webkitSpeechRecognition" in window;
+    const hasStandardSpeech = "SpeechRecognition" in window;
+    const supported = hasWebkitSpeech || hasStandardSpeech;
+    setSpeechSupported(supported);
+
+    console.log("🎙️ Speech Recognition Support:", {
+      webkitSpeechRecognition: hasWebkitSpeech,
+      SpeechRecognition: hasStandardSpeech,
+      supported: supported
+    });
+  }, []);
+
+  // Cleanup ambient sound on component unmount
+  useEffect(() => {
+    return () => {
+      stopAmbientSound();
+      speechSynthesis.cancel();
+    };
+  }, []);
+
+  // Keyboard shortcut for voice interruption (Space bar)
+  useEffect(() => {
+    const handleKeyPress = (event) => {
+      if (event.code === 'Space' && voiceModeRef.current && isSpeaking && canInterrupt) {
+        event.preventDefault();
+        interruptSpeech();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+    return () => document.removeEventListener('keydown', handleKeyPress);
+  }, [isSpeaking, canInterrupt]);
+
+  // Ambient background sound for medical atmosphere
+  const createAmbientSound = () => {
+    if (!ambientAudio) {
+      // Create a subtle ambient sound using Web Audio API
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator1 = audioContext.createOscillator();
+      const oscillator2 = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      // Create a soft, low-frequency ambient tone
+      oscillator1.frequency.setValueAtTime(60, audioContext.currentTime); // Low bass tone
+      oscillator2.frequency.setValueAtTime(120, audioContext.currentTime); // Harmonic
+
+      oscillator1.type = 'sine';
+      oscillator2.type = 'sine';
+
+      // Very low volume (10% as suggested)
+      gainNode.gain.setValueAtTime(0.02, audioContext.currentTime);
+
+      // Connect the audio nodes
+      oscillator1.connect(gainNode);
+      oscillator2.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      // Start the ambient sound
+      oscillator1.start();
+      oscillator2.start();
+
+      setAmbientAudio({ audioContext, oscillator1, oscillator2, gainNode });
+    }
+  };
+
+  const stopAmbientSound = () => {
+    if (ambientAudio) {
+      try {
+        ambientAudio.oscillator1.stop();
+        ambientAudio.oscillator2.stop();
+        ambientAudio.audioContext.close();
+      } catch (error) {
+        console.log('Ambient sound already stopped');
+      }
+      setAmbientAudio(null);
+    }
+  };
+
+  // Voice interruption function - allows patients to interrupt MediMate
+  const interruptSpeech = () => {
+    if (currentUtteranceRef.current && isSpeaking && canInterrupt) {
+      console.log("🛑 Patient interrupted MediMate's speech");
+      speechSynthesis.cancel();
+      currentUtteranceRef.current = null;
+      setIsSpeaking(false);
+
+      // Start listening immediately after interruption
+      if (voiceModeRef.current) {
+        setTimeout(() => {
+          console.log("🎙️ Starting to listen after interruption");
+          startListening();
+        }, 500);
+      }
+      return true;
+    }
+    return false;
+  };
+
+  // Simple bell sound signal - no visual prompt, just audio cue
+  const playBellSound = () => {
+    console.log("🔔 Playing simple bell sound");
+
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+      // Create a simple, pleasant bell sound
+      const playBellTone = (frequency, startTime, duration, volume = 0.3) => {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.frequency.value = frequency;
+        oscillator.type = 'sine';
+
+        gainNode.gain.setValueAtTime(volume, audioContext.currentTime + startTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + startTime + duration);
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.start(audioContext.currentTime + startTime);
+        oscillator.stop(audioContext.currentTime + startTime + duration);
+      };
+
+      // Play a gentle bell sound: single pleasant tone
+      playBellTone(800, 0, 0.5, 0.4);      // Single bell tone
+      console.log("✅ Bell sound played");
+
+      setTimeout(() => {
+        audioContext.close();
+        console.log("✅ Bell audio context closed");
+      }, 600);
+
+    } catch (error) {
+      console.log("🔔 Bell sound not available:", error);
+    }
+  };
+
+  // Enhanced Text-to-speech with interruption support and multi-language
+  const speakText = (text, forceVoiceMode = null) => {
+    console.log("🚀 speakText called with forceVoiceMode:", forceVoiceMode, "current voiceMode:", voiceMode, "language:", selectedLanguage);
+    if (!("speechSynthesis" in window)) return;
+
+    // Cancel any existing speech for interruption support
+    if (currentUtteranceRef.current) {
+      speechSynthesis.cancel();
+      currentUtteranceRef.current = null;
+      console.log("🛑 Interrupted previous speech");
+    }
+
+    // Ensure voices are loaded
+    const ensureVoicesLoaded = () => {
+      return new Promise((resolve) => {
+        const voices = speechSynthesis.getVoices();
+        if (voices.length > 0) {
+          resolve(voices);
+        } else {
+          speechSynthesis.onvoiceschanged = () => {
+            resolve(speechSynthesis.getVoices());
+          };
+        }
+      });
+    };
+
+    ensureVoicesLoaded().then(() => {
+      // Clean and prepare text for realistic, natural speech
+      let cleanText = text
+        .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold markdown
+        .replace(/[•]/g, '') // Remove bullet points
+        .replace(/\n+/g, '. ') // Replace line breaks with natural pauses
+        .replace(/\.\s*\./g, '.') // Fix double periods
+        .replace(/\?{2,}/g, '?') // Fix multiple question marks
+        .replace(/\.{2,}/g, '.') // Fix multiple periods
+        .replace(/,\s*,/g, ',') // Fix double commas
+        .replace(/\s+/g, ' ') // Normalize whitespace
+        .trim();
+
+      // Add natural conversational elements for realistic speech
+      cleanText = cleanText
+        .replace(/\. /g, '. ') // Natural pauses after sentences
+        .replace(/, /g, ', ') // Natural pauses after clauses
+        .replace(/However,/gi, 'However, ') // Conversational transitions
+        .replace(/Additionally,/gi, 'Additionally, ')
+        .replace(/Furthermore,/gi, 'Furthermore, ')
+        .replace(/For example,/gi, 'For example, ')
+        .replace(/In fact,/gi, 'In fact, ')
+        .replace(/Of course,/gi, 'Of course, ')
+        .replace(/Well,/gi, 'Well, ') // Natural conversation starters
+        .replace(/Now,/gi, 'Now, ')
+        .replace(/So,/gi, 'So, ')
+        .replace(/Alright,/gi, 'Alright, ')
+        .replace(/Okay,/gi, 'Okay, ');
+
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+
+      // CONFIGURABLE VOICE SETTINGS
+      // Use user-configured voice settings for personalized experience
+      utterance.rate = voiceSettings.rate;
+      utterance.pitch = voiceSettings.pitch;
+      utterance.volume = voiceSettings.volume;
+      utterance.lang = selectedLanguage;
+
+      console.log("🎛️ Voice settings applied:", {
+        rate: utterance.rate,
+        pitch: utterance.pitch,
+        volume: utterance.volume,
+        language: utterance.lang
+      });
+
+      // Select the most caring, professional voice available
+      const voices = speechSynthesis.getVoices();
+
+      // Priority order: Soft, caring voices for medical consultation in selected language
+      const currentLangCode = selectedLanguage.split('-')[0]; // e.g., 'en' from 'en-US'
+      const languageVoices = voices.filter(voice =>
+        voice.lang.startsWith(currentLangCode) || voice.lang === selectedLanguage
+      );
+
+      console.log(`🌍 Found ${languageVoices.length} voices for language: ${selectedLanguage}`);
+
+      // HIGHEST PRIORITY: Soft female voices - perfect for medical consultation
+      const softVoices = languageVoices.filter(voice => {
+        const voiceName = voice.name.toLowerCase();
+
+        // For Telugu and Indian languages, prefer available voices
+        if (selectedLanguage.includes('IN')) {
+          return voiceName.includes('female') ||
+            voiceName.includes('google') ||
+            voiceName.includes('microsoft') ||
+            !voiceName.includes('male');
+        }
+
+        // For English and other languages, prefer soft female voices
+        return (
+          voiceName.includes('samantha') ||      // macOS - very soft, caring female voice
+          voiceName.includes('karen') ||         // Windows - gentle female voice  
+          voiceName.includes('hazel') ||         // Windows - warm female voice
+          voiceName.includes('zira') ||          // Windows - professional female voice
+          voiceName.includes('susan') ||         // macOS - soft female voice
+          voiceName.includes('victoria') ||      // macOS - elegant female voice
+          voiceName.includes('allison') ||       // macOS - friendly female voice
+          voiceName.includes('ava') ||           // macOS - modern female voice
+          voiceName.includes('serena') ||        // Windows - calm female voice
+          voiceName.includes('aria') ||          // Windows - gentle female voice
+          voiceName.includes('jenny') ||         // Neural female voice
+          voiceName.includes('michelle') ||      // Neural female voice
+          voiceName.includes('female') ||        // Generic female voices
+          (voiceName.includes('google') && voiceName.includes('female')) ||
+          (voiceName.includes('microsoft') && voiceName.includes('female'))) &&
+          !voiceName.includes('male');             // Exclude any male voices
+      });
+
+      // SECOND PRIORITY: Neural/Premium voices (most realistic)
+      const neuralVoices = softVoices.filter(voice =>
+        voice.name.includes('Neural') || voice.name.includes('Premium') || voice.name.includes('Enhanced')
+      );
+
+      // THIRD PRIORITY: Google voices (very natural)
+      const googleVoices = softVoices.filter(voice => voice.name.includes('Google'));
+
+      // FOURTH PRIORITY: Microsoft voices (good quality)
+      const microsoftVoices = softVoices.filter(voice => voice.name.includes('Microsoft'));
+
+      // FIFTH PRIORITY: macOS voices (high quality)
+      const macVoices = softVoices.filter(voice =>
+        voice.name.includes('Samantha') || voice.name.includes('Susan') ||
+        voice.name.includes('Victoria') || voice.name.includes('Allison') || voice.name.includes('Ava')
+      );
+
+      // FALLBACK: Any quality voices for selected language
+      const fallbackVoices = languageVoices.filter(voice =>
+        voice.name.includes('Google') || voice.name.includes('Microsoft') ||
+        voice.name.includes('Neural') || voice.name.includes('Premium')
+      );
+
+      // Select the best soft female voice available
+      let selectedVoice = null;
+
+      if (neuralVoices.length > 0) {
+        selectedVoice = neuralVoices[0];
+        console.log(`🎭 Selected: Premium Neural Voice for ${selectedLanguage}`);
+      } else if (googleVoices.length > 0) {
+        selectedVoice = googleVoices[0];
+        console.log(`🎭 Selected: Google Voice for ${selectedLanguage}`);
+      } else if (microsoftVoices.length > 0) {
+        selectedVoice = microsoftVoices[0];
+        console.log(`🎭 Selected: Microsoft Voice for ${selectedLanguage}`);
+      } else if (macVoices.length > 0) {
+        selectedVoice = macVoices[0];
+        console.log(`🎭 Selected: macOS Voice for ${selectedLanguage}`);
+      } else if (fallbackVoices.length > 0) {
+        selectedVoice = fallbackVoices[0];
+        console.log(`🎭 Selected: Fallback Voice for ${selectedLanguage}`);
+      } else if (languageVoices.length > 0) {
+        selectedVoice = languageVoices[0];
+        console.log(`🎭 Selected: Default Voice for ${selectedLanguage}`);
+      }
+
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+        console.log(`🎤 Using voice: ${selectedVoice.name} (${selectedVoice.lang})`);
+      }
+
+      // Speech event handlers
+      utterance.onstart = () => {
+        setIsSpeaking(true);
+        console.log("🗣️ MediMate started speaking");
+      };
+
+      utterance.onend = () => {
+        setIsSpeaking(false);
+        currentUtteranceRef.current = null;
+        console.log("✅ MediMate finished speaking");
+
+        // Auto-listen after speaking in voice mode
+        if (voiceModeRef.current) {
+          setTimeout(() => {
+            playBellSound();
+            setTimeout(() => {
+              startListening();
+            }, 800);
+          }, 1000);
+        }
+      };
+
+      utterance.onerror = (event) => {
+        console.error("❌ Speech synthesis error:", event.error);
+        setIsSpeaking(false);
+        currentUtteranceRef.current = null;
+      };
+
+      // Store reference and speak
+      currentUtteranceRef.current = utterance;
+      speechSynthesis.speak(utterance);
+    });
+  };
+
+  // Voice recognition
+  const startListening = () => {
+    if (!speechSupported) {
+      console.log("❌ Speech recognition not supported");
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = selectedLanguage;
+
+    setIsListening(true);
+    console.log(`🎙️ Starting to listen in ${selectedLanguage}`);
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      console.log("🎤 Heard:", transcript);
+      setCurrentMessage(transcript);
+      setIsListening(false);
+      handleSendMessage(transcript);
+    };
+
+    recognition.onerror = (event) => {
+      console.error("❌ Speech recognition error:", event.error);
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      console.log("🎙️ Stopped listening");
+    };
+
+    recognition.start();
+  };
+
+  // Send message to API
+  const handleSendMessage = async (messageText = currentMessage) => {
+    if (!messageText.trim()) return;
+
+    const userMessage = { type: 'user', content: messageText };
+    setMessages(prev => [...prev, userMessage]);
+    setCurrentMessage('');
+    setLoading(true);
+    clearError();
+
+    // Detect symptoms and urgency for auto-booking
+    const symptomKeywords = ['pain', 'fever', 'headache', 'nausea', 'cough', 'rash', 'chest pain', 'stomach ache', 'breathing problem', 'dizziness', 'sore throat', 'back pain', 'joint pain', 'fatigue', 'weakness'];
+    const urgentKeywords = ['severe', 'emergency', 'urgent', 'can\'t breathe', 'chest pain', 'heart attack'];
+    const appointmentKeywords = ['appointment', 'book', 'schedule', 'doctor', 'visit', 'consultation'];
+    
+    const hasSymptoms = symptomKeywords.some(keyword => messageText.toLowerCase().includes(keyword));
+    const isUrgent = urgentKeywords.some(keyword => messageText.toLowerCase().includes(keyword));
+    const wantsAppointment = appointmentKeywords.some(keyword => messageText.toLowerCase().includes(keyword));
+
+    try {
+      const response = await api.post('/api/chat', {
+        message: messageText,
+        language: selectedLanguage
+      });
+
+      let aiResponse = response.data.response || "I'm here to help with your health questions.";
+      
+      // Auto-book appointment if symptoms detected and user wants appointment
+      if (hasSymptoms && wantsAppointment) {
+        aiResponse += "\n\n🤖 **Auto-booking appointment based on your symptoms...**";
+        
+        const aiMessage = { type: 'ai', content: aiResponse };
+        setMessages(prev => [...prev, aiMessage]);
+        
+        if (voiceMode || voiceModeRef.current) {
+          speakText("I understand your symptoms. Let me book an appointment for you automatically.");
+        }
+        
+        const urgency = isUrgent ? 'emergency' : 'normal';
+        await autoBookAppointment(messageText, urgency);
+        
+      } else if (hasSymptoms) {
+        // Add appointment suggestion after symptom advice
+        aiResponse += "\n\n📅 **Would you like to book an appointment?**\nBased on your symptoms, I recommend seeing a doctor for proper evaluation and treatment. Click 'Book Appointment' above or say 'book appointment' to schedule automatically.";
+        
+        const aiMessage = { type: 'ai', content: aiResponse };
+        setMessages(prev => [...prev, aiMessage]);
+        
+        if (voiceMode || voiceModeRef.current) {
+          speakText(aiResponse + " Would you like me to book an appointment for you?");
+        }
+        
+      } else if (wantsAppointment) {
+        aiResponse += "\n\n📅 I'd be happy to help you book an appointment. Please describe your symptoms so I can find the right specialist for you.";
+        
+        const aiMessage = { type: 'ai', content: aiResponse };
+        setMessages(prev => [...prev, aiMessage]);
+        
+        if (voiceMode || voiceModeRef.current) {
+          speakText(aiResponse);
+        }
+        
+      } else {
+        // Translate if needed
+        if (selectedLanguage === 'hi-IN') {
+          aiResponse = translateResponse(aiResponse, selectedLanguage);
+        }
+
+        const aiMessage = { type: 'ai', content: aiResponse };
+        setMessages(prev => [...prev, aiMessage]);
+
+        // Speak response if in voice mode
+        if (voiceMode || voiceModeRef.current) {
+          speakText(aiResponse);
+        }
+      }
+
+    } catch (error) {
+      console.error('Chat error:', error);
+      handleError(error, 'chat');
+      const errorMsg = { type: 'ai', content: 'Sorry, I encountered an issue. Please try again.' };
+      setMessages(prev => [...prev, errorMsg]);
+    } finally {
+      setLoading(false);
+    }
+  };
+  // Automatic appointment booking based on symptoms
+  const autoBookAppointment = async (symptoms, urgency = 'normal') => {
+    try {
+      setLoading(true);
+      
+      // Analyze symptoms and determine specialist
+      const specialistMapping = {
+        'chest pain|heart|cardiac': 'Cardiology',
+        'skin|rash|acne|dermatitis': 'Dermatology', 
+        'stomach|digestive|nausea|vomiting': 'Gastroenterology',
+        'fever|infection|general': 'General Medicine',
+        'headache|migraine|neurological': 'Neurology',
+        'breathing|lung|asthma|cough': 'Pulmonology'
+      };
+
+      let specialty = 'General Medicine';
+      const symptomText = symptoms.toLowerCase();
+      
+      for (const [pattern, spec] of Object.entries(specialistMapping)) {
+        if (new RegExp(pattern).test(symptomText)) {
+          specialty = spec;
+          break;
+        }
+      }
+
+      // Book appointment automatically
+      const appointmentData = {
+        symptoms: symptoms,
+        specialty: specialty,
+        appointmentType: urgency === 'emergency' ? 'emergency' : 'consultation',
+        priority: urgency === 'emergency' ? 'high' : 'normal',
+        preferredDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        preferredTime: '10:00',
+        notificationPreferences: { email: true, sms: true }
+      };
+
+      const response = await api.post('/api/appointments/auto-book', appointmentData);
+      
+      if (response.data.success) {
+        const appointment = response.data.appointment;
+        
+        const confirmationMsg = {
+          type: 'ai',
+          content: `✅ **Appointment Booked Successfully!**
+
+📅 **Date**: ${appointment.date}
+🕐 **Time**: ${appointment.time}
+👨‍⚕️ **Doctor**: Dr. ${appointment.doctorName}
+🏥 **Specialty**: ${appointment.specialty}
+
+📧 **Email confirmation** sent
+📱 **SMS reminder** scheduled
+
+**Appointment ID**: ${appointment.id}`
+        };
+
+        setMessages(prev => [...prev, confirmationMsg]);
+        
+        if (voiceMode || voiceModeRef.current) {
+          speakText("Your appointment has been successfully booked. Check your email for confirmation.");
+        }
+
+        return appointment;
+      }
+    } catch (error) {
+      const errorMsg = {
+        type: 'ai', 
+        content: `❌ I couldn't automatically book your appointment. Click the "Book Appointment" button above for manual booking.`
+      };
+      setMessages(prev => [...prev, errorMsg]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Toggle voice mode
+  const toggleVoiceMode = () => {
+    const newVoiceMode = !voiceMode;
+    setVoiceMode(newVoiceMode);
+    voiceModeRef.current = newVoiceMode;
+
+    if (newVoiceMode) {
+      createAmbientSound();
+      speakText("Voice mode activated. How can I help you today?");
+    } else {
+      stopAmbientSound();
+      speechSynthesis.cancel();
+      setIsSpeaking(false);
+    }
+  };
+
+  return (
+    <PageErrorBoundary>
+      <div className="chat-container">
+        <div className="chat-header">
+          <h1>🏥 MediMate Health Assistant</h1>
+          
+          <div className="header-controls">
+            {/* Language Selector */}
+            <div className="language-selector">
+              <select 
+                value={selectedLanguage} 
+                onChange={(e) => setSelectedLanguage(e.target.value)}
+              >
+                {supportedLanguages.map(lang => (
+                  <option key={lang.code} value={lang.code}>
+                    {lang.flag} {lang.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Book Appointment Button */}
+            <button 
+              className="book-appointment-btn"
+              onClick={() => window.open('/appointments', '_blank')}
+              title="Book Appointment"
+            >
+              📅 Book Appointment
+            </button>
+          </div>
+        </div>
+
+        {/* Error Display */}
+        {error && (
+          <InlineErrorMessage 
+            message={errorMessage}
+            suggestions={recoverySuggestions}
+            onDismiss={clearError}
+          />
+        )}
+
+        {/* Messages */}
+        <div className="messages-container">
+          {messages.map((message, index) => (
+            <div key={index} className={`message ${message.type}`}>
+              <div className="message-content">
+                {message.content}
+              </div>
+            </div>
+          ))}
+          
+          {loading && (
+            <div className="message ai">
+              <div className="message-content">
+                <div className="typing-indicator">
+                  <span></span><span></span><span></span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Input */}
+        <div className="chat-input">
+          <input
+            type="text"
+            value={currentMessage}
+            onChange={(e) => setCurrentMessage(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+            placeholder="Type your health question..."
+            disabled={loading}
+          />
+          
+          {/* Voice Conversation Button */}
+          <button 
+            onClick={toggleVoiceMode}
+            className={`voice-conversation-btn ${voiceMode ? 'active' : ''}`}
+            title="Natural Voice Conversation"
+          >
+            {voiceMode ? '👨‍⚕️' : '🩺'}
+          </button>
+          
+          {/* Speech to Text Button */}
+          {speechSupported && (
+            <button 
+              onClick={startListening}
+              disabled={isListening || loading}
+              className="speech-to-text-btn"
+              title="Speech to Text"
+            >
+              {isListening ? '🎙️' : '🎙️'}
+            </button>
+          )}
+          
+          {/* Send Button */}
+          <button 
+            onClick={() => handleSendMessage()}
+            disabled={loading || !currentMessage.trim()}
+            className="send-btn"
+            title="Send Message"
+          >
+            Send
+          </button>
+        </div>
+
+        {/* Voice Status */}
+        {voiceMode && (
+          <div className="voice-status">
+            {isSpeaking && <div className="speaking">🗣️ MediMate is speaking...</div>}
+            {isListening && <div className="listening">🎙️ Listening...</div>}
+            {canInterrupt && isSpeaking && (
+              <div className="interrupt-hint">Press Space to interrupt</div>
+            )}
+          </div>
+        )}
+      </div>
+    </PageErrorBoundary>
+  );
+};
+
+export default ChatPage;

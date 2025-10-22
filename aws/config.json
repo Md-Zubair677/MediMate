@@ -1,0 +1,145 @@
+{
+  "aws": {
+    "region": "ap-south-1",
+    "profile": null,
+    "services": {
+      "bedrock": {
+        "enabled": true,
+        "model_id": "anthropic.claude-3-5-sonnet-20240620-v1:0",
+        "max_tokens": 1000,
+        "temperature": 0.7,
+        "fallback_enabled": true
+      },
+      "dynamodb": {
+        "enabled": true,
+        "tables": {
+          "appointments": "medimate-appointments",
+          "users": "medimate-users",
+          "reports": "medimate-reports",
+          "chat_sessions": "medimate-chat-sessions"
+        },
+        "fallback_enabled": true
+      },
+      "textract": {
+        "enabled": true,
+        "supported_formats": ["pdf", "jpg", "jpeg", "png"],
+        "max_file_size_mb": 10,
+        "fallback_enabled": true
+      },
+      "cognito": {
+        "enabled": true,
+        "user_pool_id": "ap-south-1_59G3RhXb2",
+        "client_id": "69s0o8l6uvs56ou965cmmhfper",
+        "client_secret": "1dtekm3d8flcb8acr45uig37pk19p01ulk805h5kl92gvcu464f0",
+        "region": "ap-south-1",
+        "password_policy": {
+          "minimum_length": 8,
+          "require_uppercase": true,
+          "require_lowercase": true,
+          "require_numbers": true,
+          "require_symbols": false
+        },
+        "fallback_enabled": true
+      },
+      "ses": {
+        "enabled": true,
+        "from_email": "noreply@medimate.com",
+        "region": "ap-south-1",
+        "configuration_set": null,
+        "template_names": {
+          "appointment_confirmation": "medimate-appointment-confirmation",
+          "appointment_reminder": "medimate-appointment-reminder",
+          "password_reset": "medimate-password-reset",
+          "welcome": "medimate-welcome"
+        },
+        "fallback_enabled": true
+      },
+      "sns": {
+        "enabled": true,
+        "region": "ap-south-1",
+        "topics": {
+          "appointment_notifications": null,
+          "system_alerts": null
+        },
+        "sms_sender_id": "MediMate",
+        "fallback_enabled": true
+      },
+      "sagemaker": {
+        "enabled": true,
+        "endpoint_name": "medimate-health-risk-endpoint",
+        "model_name": "medimate-health-risk-predictor",
+        "instance_type": "ml.t2.medium",
+        "initial_instance_count": 1,
+        "fallback_enabled": true
+      },
+      "comprehend_medical": {
+        "enabled": true,
+        "region": "ap-south-1",
+        "fallback_enabled": true
+      },
+      "kms": {
+        "enabled": true,
+        "key_id": null,
+        "key_alias": "alias/medimate-encryption-key",
+        "key_description": "MediMate platform encryption key for HIPAA compliance",
+        "key_usage": "ENCRYPT_DECRYPT",
+        "fallback_enabled": true
+      }
+    }
+  },
+  "connection_config": {
+    "max_pool_connections": 50,
+    "connect_timeout": 10,
+    "read_timeout": 30,
+    "retry_config": {
+      "max_attempts": 3,
+      "mode": "adaptive",
+      "backoff_multiplier": 2,
+      "initial_delay": 1
+    }
+  },
+  "demo": {
+    "enabled": true,
+    "mock_data": {
+      "doctors_count": 22,
+      "specialties": [
+        "Cardiology", "Dermatology", "Endocrinology", "Gastroenterology",
+        "Hematology", "Infectious Disease", "Nephrology", "Neurology",
+        "Oncology", "Ophthalmology", "Orthopedics", "Otolaryngology",
+        "Pediatrics", "Psychiatry", "Pulmonology", "Radiology",
+        "Rheumatology", "Surgery", "Urology", "Emergency Medicine",
+        "Family Medicine", "Internal Medicine"
+      ],
+      "sample_responses": {
+        "chat_fallback": "I'm here to help with your health questions. Please consult a healthcare professional for proper medical advice.",
+        "analysis_fallback": "This appears to be a routine medical document. Key values are within normal ranges. Please consult your healthcare provider for detailed interpretation."
+      }
+    }
+  },
+  "security": {
+    "encryption": {
+      "enabled": false,
+      "algorithm": "AES-256-GCM"
+    },
+    "rate_limiting": {
+      "enabled": false,
+      "requests_per_minute": 60
+    },
+    "cors": {
+      "allowed_origins": ["*"],
+      "allowed_methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+      "allowed_headers": ["*"]
+    }
+  },
+  "monitoring": {
+    "cloudwatch": {
+      "enabled": false,
+      "log_group": "/aws/lambda/medimate",
+      "metrics_enabled": true
+    },
+    "health_checks": {
+      "enabled": true,
+      "interval_seconds": 300
+    }
+  }
+}

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>MediMate Appointment Confirmation</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #007bff; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: #f9f9f9; padding: 20px; border-radius: 0 0 8px 8px; }
+        .section { background: white; margin: 15px 0; padding: 15px; border-radius: 5px; border-left: 4px solid #007bff; }
+        .meeting-link { background: #e8f5e8; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .location { background: #fff3cd; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+        .button { background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 MediMate</h1>
+            <h2>Appointment Confirmation</h2>
+        </div>
+        
+        <div class="content">
+            <p>Dear <strong>{{to_name}}</strong>,</p>
+            
+            <p>Your appointment has been successfully booked. Here are the details:</p>
+            
+            <div class="section">
+                <h3>📅 Appointment Details</h3>
+                <p><strong>Appointment ID:</strong> {{appointment_id}}</p>
+                <p><strong>Date:</strong> {{appointment_date}}</p>
+                <p><strong>Time:</strong> {{appointment_time}}</p>
+                <p><strong>Doctor:</strong> {{doctor_name}}</p>
+                <p><strong>Specialty:</strong> {{specialty}}</p>
+                <p><strong>Hospital:</strong> {{hospital}}</p>
+                <p><strong>Meeting Type:</strong> {{meeting_type}}</p>
+                <p><strong>Priority:</strong> {{priority}}</p>
+            </div>
+
+            {{#meeting_link}}
+            <div class="meeting-link">
+                <h3>💻 Video Meeting Details</h3>
+                <p><strong>Meeting Link:</strong> <a href="{{meeting_link}}" class="button">Join Meeting</a></p>
+                <p><strong>Meeting ID:</strong> {{appointment_id}}</p>
+                <p><strong>Instructions:</strong></p>
+                <ul>
+                    <li>Click the meeting link 5 minutes before your appointment</li>
+                    <li>Ensure you have a stable internet connection</li>
+                    <li>Test your camera and microphone beforehand</li>
+                    <li>Have your medical records ready to share if needed</li>
+                </ul>
+            </div>
+            {{/meeting_link}}
+
+            {{#location_details}}
+            <div class="location">
+                <h3>📍 Location Details</h3>
+                <p>{{location_details}}</p>
+                <p><strong>Instructions:</strong></p>
+                <ul>
+                    <li>Please arrive 15 minutes before your appointment time</li>
+                    <li>Bring a valid ID and insurance card</li>
+                    <li>Bring any relevant medical records or test results</li>
+                    <li>Check-in at the reception desk on arrival</li>
+                </ul>
+            </div>
+            {{/location_details}}
+            
+            <div class="section">
+                <h3>👤 Patient Information</h3>
+                <p><strong>Name:</strong> {{patient_name}}</p>
+                <p><strong>Age:</strong> {{patient_age}} years</p>
+                <p><strong>Gender:</strong> {{patient_gender}}</p>
+                <p><strong>Phone:</strong> {{patient_phone}}</p>
+                <p><strong>Email:</strong> {{patient_email}}</p>
+            </div>
+            
+            <div class="section">
+                <h3>🩺 Symptoms Noted</h3>
+                <p>{{symptoms}}</p>
+            </div>
+            
+            <p>If you need to reschedule or cancel your appointment, please contact us at least 24 hours in advance.</p>
+            
+            <div class="section">
+                <h3>📞 Contact Information</h3>
+                <p><strong>Phone:</strong> +1-800-MEDIMATE</p>
+                <p><strong>Email:</strong> appointments@medimate.com</p>
+                <p><strong>Website:</strong> www.medimate.com</p>
+            </div>
+            
+            <p>Thank you for choosing MediMate!</p>
+            
+            <p><strong>Best regards,</strong><br>
+            MediMate Healthcare Team</p>
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated message. Please do not reply to this email.</p>
+            <p>© 2024 MediMate Healthcare. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

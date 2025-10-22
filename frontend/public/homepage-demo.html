@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediMate Homepage Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .animate-fade-in { animation: fadeIn 0.8s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-b from-blue-50 to-white animate-fade-in">
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-sm px-6 py-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <!-- Logo -->
+            <h1 class="text-2xl font-bold text-blue-600">MediMate</h1>
+            
+            <!-- Navigation Icons -->
+            <div class="hidden md:flex space-x-6">
+                <button class="w-16 h-16 bg-white shadow-md hover:bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-center text-blue-600 hover:text-blue-800 transition-all hover:shadow-lg hover:ring-2 hover:ring-blue-200 hover:scale-110 transform">
+                    💬
+                </button>
+                <button class="w-16 h-16 bg-white shadow-md hover:bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-center text-blue-600 hover:text-blue-800 transition-all hover:shadow-lg hover:ring-2 hover:ring-blue-200 hover:scale-110 transform">
+                    🩸
+                </button>
+                <button class="w-16 h-16 bg-white shadow-md hover:bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-center text-blue-600 hover:text-blue-800 transition-all hover:shadow-lg hover:ring-2 hover:ring-blue-200 hover:scale-110 transform">
+                    📅
+                </button>
+                <button class="w-16 h-16 bg-white shadow-md hover:bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-center text-blue-600 hover:text-blue-800 transition-all hover:shadow-lg hover:ring-2 hover:ring-blue-200 hover:scale-110 transform">
+                    👤
+                </button>
+            </div>
+            
+            <!-- Mobile Menu Button -->
+            <div class="md:hidden">
+                <button class="w-12 h-12 bg-white shadow-md hover:bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-center text-blue-600 hover:text-blue-800 transition-all">👤</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Welcome Section -->
+    <main class="flex-1 flex flex-col items-center justify-center px-6 py-20">
+        <div class="text-center max-w-4xl mx-auto">
+            <h2 class="text-gray-800 font-semibold text-2xl md:text-3xl">
+                Welcome to MediMate — Your AI-powered health companion.
+            </h2>
+            <p class="text-gray-500 text-lg mt-2">
+                Connecting you with healthcare services and support
+            </p>
+
+            <!-- Main Action Buttons -->
+            <div class="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-8 mt-12">
+                <button class="w-16 h-16 bg-white shadow-md hover:bg-blue-50 border border-blue-100 rounded-2xl flex flex-col items-center justify-center text-blue-600 hover:text-blue-800 transition-all hover:shadow-lg hover:ring-2 hover:ring-blue-200 hover:scale-110 transform group">
+                    <div class="text-2xl">💬</div>
+                    <span class="text-xs font-medium text-gray-700 group-hover:text-gray-900 mt-1 hidden md:block">Chat</span>
+                </button>
+                
+                <button class="w-16 h-16 bg-white shadow-md hover:bg-blue-50 border border-blue-100 rounded-2xl flex flex-col items-center justify-center text-blue-600 hover:text-blue-800 transition-all hover:shadow-lg hover:ring-2 hover:ring-blue-200 hover:scale-110 transform group">
+                    <div class="text-2xl">🩸</div>
+                    <span class="text-xs font-medium text-gray-700 group-hover:text-gray-900 mt-1 hidden md:block">Blood</span>
+                </button>
+                
+                <button class="w-16 h-16 bg-white shadow-md hover:bg-blue-50 border border-blue-100 rounded-2xl flex flex-col items-center justify-center text-blue-600 hover:text-blue-800 transition-all hover:shadow-lg hover:ring-2 hover:ring-blue-200 hover:scale-110 transform group">
+                    <div class="text-2xl">📅</div>
+                    <span class="text-xs font-medium text-gray-700 group-hover:text-gray-900 mt-1 hidden md:block">Book</span>
+                </button>
+                
+                <button class="w-16 h-16 bg-white shadow-md hover:bg-blue-50 border border-blue-100 rounded-2xl flex flex-col items-center justify-center text-blue-600 hover:text-blue-800 transition-all hover:shadow-lg hover:ring-2 hover:ring-blue-200 hover:scale-110 transform group">
+                    <div class="text-2xl">👤</div>
+                    <span class="text-xs font-medium text-gray-700 group-hover:text-gray-900 mt-1 hidden md:block">Profile</span>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200">
+        <div class="text-sm text-gray-500 text-center py-4">
+            © 2025 MediMate — All Rights Reserved.
+        </div>
+    </footer>
+
+    <script>
+        // Add click handlers for demo
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('click', function() {
+                const text = this.textContent.trim();
+                if (text.includes('Chat') || text === '💬') {
+                    alert('Navigating to Chat Page');
+                } else if (text.includes('Blood') || text === '🩸') {
+                    alert('Navigating to Blood Donation');
+                } else if (text.includes('Book') || text === '📅') {
+                    alert('Navigating to Book Appointments');
+                } else if (text.includes('Profile') || text === '👤') {
+                    alert('Navigating to Profile / Health Record');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

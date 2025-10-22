@@ -1,0 +1,351 @@
+import React, { useState } from 'react';
+
+const LoginPage = ({ onNext }) => {
+  const [isLogin, setIsLogin] = useState(true);
+  const [activeRole, setActiveRole] = useState('patient');
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    name: '',
+    confirmPassword: '',
+    phone: '',
+    age: '',
+    gender: '',
+    healthId: '',
+    licenseNumber: '',
+    specialization: '',
+    experience: '',
+    adminKey: ''
+  });
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onNext({
+      id: `${activeRole}_${Date.now()}`,
+      role: activeRole,
+      ...formData
+    });
+  };
+
+  const getRoleSpecificFields = () => {
+    if (!isLogin) {
+      if (activeRole === 'patient') {
+        return (
+          <>
+            <div className="form-group">
+              <label className="form-label">🎂 Age</label>
+              <input
+                type="number"
+                className="form-input"
+                value={formData.age}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, age: e.target.value }))
+                }
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">⚧ Gender</label>
+              <select
+                className="form-select"
+                value={formData.gender}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, gender: e.target.value }))
+                }
+              >
+                <option value="">Select</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">🆔 Health ID (Optional)</label>
+              <input
+                type="text"
+                className="form-input"
+                value={formData.healthId}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, healthId: e.target.value }))
+                }
+              />
+            </div>
+          </>
+        );
+      }
+
+      if (activeRole === 'doctor') {
+        return (
+          <>
+            <div className="form-group">
+              <label className="form-label">🆔 Medical License Number</label>
+              <input
+                type="text"
+                className="form-input"
+                value={formData.licenseNumber}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    licenseNumber: e.target.value
+                  }))
+                }
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">🩺 Specialization</label>
+              <select
+                className="form-select"
+                value={formData.specialization}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    specialization: e.target.value
+                  }))
+                }
+              >
+                <option value="">Select Specialization</option>
+                <option value="cardiology">Cardiology</option>
+                <option value="neurology">Neurology</option>
+                <option value="pediatrics">Pediatrics</option>
+                <option value="orthopedics">Orthopedics</option>
+                <option value="dermatology">Dermatology</option>
+                <option value="general">General Medicine</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">⌛ Experience (Years)</label>
+              <input
+                type="number"
+                className="form-input"
+                value={formData.experience}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    experience: e.target.value
+                  }))
+                }
+              />
+            </div>
+          </>
+        );
+      }
+
+      if (activeRole === 'admin') {
+        return (
+          <div className="form-group">
+            <label className="form-label">🔑 Admin Key</label>
+            <input
+              type="password"
+              className="form-input"
+              value={formData.adminKey}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, adminKey: e.target.value }))
+              }
+            />
+          </div>
+        );
+      }
+    }
+    return null;
+  };
+
+  return (
+    <div className="auth-page" style={{ backgroundColor: '#f0f8ff' }}>
+      <div className="auth-container">
+        {/* Header */}
+        <div className="auth-header">
+          <div className="medimate-logo">❤️</div>
+          <h1 className="auth-title">❤️ MediMate Healthcare Platform</h1>
+          <p className="auth-subtitle">
+            {isLogin
+              ? `Welcome back! Please login to your ${activeRole} portal`
+              : `Create a new ${activeRole} account`}
+          </p>
+        </div>
+
+        {/* Role Tabs */}
+        <div className="role-tabs">
+          <div
+            className={`role-tab ${activeRole === 'patient' ? 'active' : ''}`}
+            onClick={() => setActiveRole('patient')}
+          >
+            <div className="role-icon">👤</div>
+            <div className="role-title">Patient</div>
+          </div>
+          <div
+            className={`role-tab ${activeRole === 'doctor' ? 'active' : ''}`}
+            onClick={() => setActiveRole('doctor')}
+          >
+            <div className="role-icon">👨‍⚕️</div>
+            <div className="role-title">Doctor</div>
+          </div>
+          <div
+            className={`role-tab ${activeRole === 'admin' ? 'active' : ''}`}
+            onClick={() => setActiveRole('admin')}
+          >
+            <div className="role-icon">🤖</div>
+            <div className="role-title">AI Assistant (Admin)</div>
+          </div>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="auth-form">
+          {!isLogin && (
+            <>
+              <div className="form-group">
+                <label className="form-label">👤 Full Name</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, name: e.target.value }))
+                  }
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">📱 Phone Number</label>
+                <input
+                  type="tel"
+                  className="form-input"
+                  value={formData.phone}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, phone: e.target.value }))
+                  }
+                />
+              </div>
+              {getRoleSpecificFields()}
+            </>
+          )}
+
+          <div className="form-group">
+            <label className="form-label">
+              📧 {activeRole === 'patient' ? 'Email or Phone' : 'Email'}
+            </label>
+            <input
+              type="email"
+              className="form-input"
+              value={formData.email}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, email: e.target.value }))
+              }
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">🔒 Password</label>
+            <div className="password-input-wrapper">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                className="form-input password-input"
+                value={formData.password}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, password: e.target.value }))
+                }
+                required
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? '🙈' : '👁️'}
+              </button>
+            </div>
+          </div>
+
+          {!isLogin && (
+            <div className="form-group">
+              <label className="form-label">🔒 Confirm Password</label>
+              <input
+                type="password"
+                className="form-input"
+                value={formData.confirmPassword}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    confirmPassword: e.target.value
+                  }))
+                }
+                required
+              />
+            </div>
+          )}
+
+          {isLogin && (
+            <div className="forgot-password">
+              <a href="#forgot">Forgot Password?</a>
+            </div>
+          )}
+
+          <button type="submit" className="auth-button">
+            {isLogin
+              ? `Login as ${activeRole}`
+              : `Register as ${activeRole}`}
+          </button>
+        </form>
+
+        {/* Switch Login/Register */}
+        <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+          <p style={{ color: '#6c757d', fontSize: '0.875rem' }}>
+            {isLogin ? "Don't have an account?" : "Already registered?"}{' '}
+            <button
+              onClick={() => setIsLogin(!isLogin)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#007BFF',
+                cursor: 'pointer',
+                textDecoration: 'underline',
+                fontWeight: '500'
+              }}
+            >
+              {isLogin ? 'Register here' : 'Login here'}
+            </button>
+          </p>
+        </div>
+
+        {/* Social Logins */}
+        {isLogin && (
+          <div className="social-login">
+            <div className="social-divider">
+              <span>Or continue with</span>
+            </div>
+            <div className="social-buttons">
+              <button className="social-button google" type="button">
+                <span>G</span> Google
+              </button>
+              <button className="social-button microsoft" type="button">
+                <span>M</span> Microsoft
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="auth-footer">
+          <div>🔒 HIPAA Compliant | 🛡️ AWS Secured | 🔐 256-bit Encryption</div>
+          {activeRole === 'doctor' && (
+            <div
+              style={{ marginTop: '0.5rem', fontSize: '0.7rem', color: '#28A745' }}
+            >
+              ✓ Medical Professional Verification Required
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Emergency Button */}
+      <button
+        className="emergency-button"
+        onClick={() => window.open('tel:911', '_self')}
+      >
+        🚨 Emergency? Call 911
+      </button>
+    </div>
+  );
+};
+
+export default LoginPage;

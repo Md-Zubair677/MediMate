@@ -1,0 +1,38 @@
+/* Compact Agent Font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+.agent-font {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+
+.agent-title {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #1a365d;
+}
+
+.agent-response {
+  font-weight: 400;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #2d3748;
+}
+
+.agent-input {
+  font-weight: 400;
+  font-size: 0.85rem;
+  color: #4a5568;
+}
+
+.agent-button {
+  font-weight: 500;
+  font-size: 0.8rem;
+}
+
+.agent-small {
+  font-size: 0.75rem;
+  color: #718096;
+}

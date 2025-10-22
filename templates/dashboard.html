@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediMate Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f8f9fa; margin: 0; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 2rem; }
+        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
+        .feature-card { background: white; border-radius: 10px; padding: 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .feature-card h3 { color: #FF9900; margin-bottom: 1rem; }
+        .feature-btn { background: #FF9900; color: white; border: none;
+ padding: 0.8rem 1.5rem; border-radius: 5px; cursor: pointer; margin-top: 1rem; }
+        .chat-container { background: white; border-radius: 10px; padding: 1.5rem; margin-top: 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: none; }
+        .chat-messages { height: 300px; overflow-y: auto; border: 1px solid #e1e5e9; border-radius: 5px; padding: 1rem; margin-bottom: 1rem; }
+        .message { margin-bottom: 1rem; padding: 0.8rem; border-radius:
+ 8px; }
+        .message.user { background: #e3f2fd; margin-left: 20%; }
+        .message.ai { background: #f3e5f5; margin-right: 20%; }
+        .chat-input { display: flex; gap: 1rem; }
+        .chat-input input { flex: 1; padding: 0.8rem; border: 1px solid
+ #e1e5e9; border-radius: 5px; }
+        .logout-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏥 MediMate Dashboard</h1>
+        <div>
+            <span>AWS Account: {{ account_id }} | Region: {{ region }}</span>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="features-grid">
+            <div class="feature-card">
+                <h3>🤖 AI Health Chat</h3>
+                <p>Get AI-powered health consultations using your AWS Bedrock.</p>
+                <button class="feature-btn" onclick="showChat()">Start Chat</button>
+            </div>
+            
+            <div class="feature-card">
+                <h3>📄 Document Analysis</h3>
+                <p>Upload medical documents for OCR processing with your AWS Textract.</p>
+                <button class="feature-btn">Upload Document</button>
+            </div>
+            
+            <div class="feature-card">
+                <h3>📊 Health Analytics</h3>
+                <p>View health data and analytics from your AWS services.</p>
+                <button class="feature-btn">View Analytics</button>
+            </div>
+        </div>
+        
+        <div class="chat-container" id="chatContainer">
+            <h3>🤖 AI Health Chat (Using Your AWS Bedrock)</h3>
+            <div class="chat-messages" id="chatMessages"></div>
+            <div class="chat-input">
+                <input type="text" id="chatInput" placeholder="Ask about health..." onkeypress="if(event.key==='Enter') sendMessage()">
+                <button class="feature-btn" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showChat() {
+            document.getElementById('chatContainer').style.display = 'block';
+        }
+        
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (!message) return;
+            
+            const messagesContainer = document.getElementById('chatMessages');
+            
+            // Add user message
+            const userMessage = document.createElement('div');
+            userMessage.className = 'message user';
+            userMessage.textContent = message;
+            messagesContainer.appendChild(userMessage);
+            input.value = '';
+            
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: message })
+                });
+                
+                const data = await response.json();
+                
+                const aiMessage = document.createElement('div');
+                aiMessage.className = 'message ai';
+                aiMessage.textContent = data.response || data.error;
+                messagesContainer.appendChild(aiMessage);
+                
+            } catch (error) {
+                const errorMessage = document.createElement('div');
+                errorMessage.className = 'message ai';
+                errorMessage.textContent = `Error: ${error.message}`;
+                messagesContainer.appendChild(errorMessage);
+            }
+            
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        function logout() {
+            if (confirm('Logout and clear AWS credentials?')) {
+                window.location.href = '/logout';
+            }
+        }
+    </script>
+</body>
+</html>
